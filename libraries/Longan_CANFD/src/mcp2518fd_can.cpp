@@ -1057,6 +1057,9 @@ GPIO_PIN_MODE gpio1) {
     // Modify
     iocon.bF.PinMode0 = gpio0;
     iocon.bF.PinMode1 = gpio1;
+    // SOFOutputEnable = 0 : output CLKOUT signal
+    // SOFOutputEnable = 1 : output SOF signal
+    iocon.bF.SOFOutputEnable = 1;
 
     // Write
     spiTransferError = mcp2518fd_WriteByte(a, iocon.byte[3]);
@@ -1846,35 +1849,42 @@ uint8_t mcp2518fd::mcp2518fd_init(uint32_t speedset, const byte clock) {
     mcp2518fd_ConfigureObjectReset(&config);
     config.IsoCrcEnable = 1;
     config.StoreInTEF = 0;
+    // 0 = unrestricted retransmission
+    // 1 = restricted retransmission - number of retransmissions set by mcp2518fd_TransmitChannelConfigure()
+    config.RestrictReTxAttempts = 1;
     mcp2518fd_Configure(&config);
+
+    // Setup RX FIFO
+    mcp2518fd_ReceiveChannelConfigureObjectReset(&rxConfig);
+    rxConfig.FifoSize = 7;
+    rxConfig.PayLoadSize = CAN_PLSIZE_64;
+    rxConfig.RxTimeStampEnable = 0;
+    mcp2518fd_ReceiveChannelConfigure(APP_RX_FIFO, &rxConfig);
 
     // Setup TX FIFO
     mcp2518fd_TransmitChannelConfigureObjectReset(&txConfig);
     txConfig.FifoSize = 7;
     txConfig.PayLoadSize = CAN_PLSIZE_64;
     txConfig.TxPriority = 1;
+    // TxAttempts = 1 : 3 attempts
+    // TxAttempts = 2 : unlimited attempts
+    txConfig.TxAttempts = 0;
     mcp2518fd_TransmitChannelConfigure(APP_TX_FIFO, &txConfig);
 
-    // Setup RX FIFO
-    mcp2518fd_ReceiveChannelConfigureObjectReset(&rxConfig);
-    rxConfig.FifoSize = 15;
-    rxConfig.PayLoadSize = CAN_PLSIZE_64;
-    mcp2518fd_ReceiveChannelConfigure(APP_RX_FIFO, &rxConfig);
-
-    // Setup RX Filter
-    //fObj.word = 0;
-    //mcp2518fd_FilterObjectConfigure(CAN_FILTER0, &fObj.bF);
-
-    // Setup RX Mask
-    //mObj.word = 0; // Only allow standard IDs
-    //mcp2518fd_FilterMaskConfigure(CAN_FILTER0, &mObj.bF);
-
-    for(int i=0; i<32; i++)
-    CANFDSPI_FilterDisable((CAN_FILTER)i);          // disable all filter
-    
-
-    // Link FIFO and Filter
-    mcp2518fd_FilterToFifoLink(CAN_FILTER0, APP_RX_FIFO, true);
+//    // Setup RX Filter
+//    fObj.word = 0;
+//    mcp2518fd_FilterObjectConfigure(CAN_FILTER0, &fObj.bF);
+//
+//    // Setup RX Mask
+//    mObj.word = 0; // Only allow standard IDs
+//    mcp2518fd_FilterMaskConfigure(CAN_FILTER0, &mObj.bF);
+//
+//    for(int i=0; i<32; i++)
+//    CANFDSPI_FilterDisable((CAN_FILTER)i);          // disable all but CAN_FILTER0 filter
+//
+//
+//    // Link FIFO and Filter
+//    mcp2518fd_FilterToFifoLink(CAN_FILTER0, APP_RX_FIFO, true);
 
     // Setup Bit Time
     mcp2518fd_BitTimeConfigure(speedset, CAN_SSP_MODE_AUTO, CAN_SYSCLK_SPEED(clock));

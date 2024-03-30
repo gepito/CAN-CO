@@ -92,10 +92,10 @@ void loop()
 {
     // send data:  id = 0x00, standrad frame, data len = 64, stmp: data buf
     CAN.sendMsgBuf(0x01, 0, CANFD::len2dlc(MAX_DATA_SIZE), stmp);
-//    stmp[0]++;
-//    CAN.sendMsgBuf(0x01, 0, CANFD::len2dlc(MAX_DATA_SIZE), stmp);
-//    stmp[0]++;
-//    CAN.sendMsgBuf(0x01, 0, CANFD::len2dlc(MAX_DATA_SIZE), stmp);
+    stmp[0]++;
+    CAN.sendMsgBuf(0x01, 0, CANFD::len2dlc(MAX_DATA_SIZE), stmp);
+    stmp[0]++;
+    CAN.sendMsgBuf(0x01, 0, CANFD::len2dlc(MAX_DATA_SIZE), stmp);
     delay(10);
 
     if (CAN_MSGAVAIL == CAN.checkReceive())
