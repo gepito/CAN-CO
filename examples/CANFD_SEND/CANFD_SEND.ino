@@ -2,6 +2,14 @@
 #include <mcp2518fd_can_dfs.h>
 #include <mcp_can_fd.h>
 
+#include <mcp2518fd_can.h>
+#include <mcp2518fd_can_dfs.h>
+#include <mcp_can_fd.h>
+
+#include <mcp2518fd_can.h>
+#include <mcp2518fd_can_dfs.h>
+#include <mcp_can_fd.h>
+
 /*  MCP2517/8 send a can fd frame
 
 ECLIPSE
