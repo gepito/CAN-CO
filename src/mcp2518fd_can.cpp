@@ -1851,7 +1851,8 @@ uint8_t mcp2518fd::mcp2518fd_init(uint32_t speedset, const byte clock) {
     config.StoreInTEF = 0;
     // 0 = unrestricted retransmission
     // 1 = restricted retransmission - number of retransmissions set by mcp2518fd_TransmitChannelConfigure()
-    config.RestrictReTxAttempts = 1;
+    config.RestrictReTxAttempts = 0;
+    else
     mcp2518fd_Configure(&config);
 
     // Setup RX FIFO
@@ -1868,7 +1869,7 @@ uint8_t mcp2518fd::mcp2518fd_init(uint32_t speedset, const byte clock) {
     txConfig.TxPriority = 1;
     // TxAttempts = 1 : 3 attempts
     // TxAttempts = 2 : unlimited attempts
-    txConfig.TxAttempts = 1;
+    txConfig.TxAttempts = 2;
     mcp2518fd_TransmitChannelConfigure(APP_TX_FIFO, &txConfig);
 
 //    // Setup RX Filter

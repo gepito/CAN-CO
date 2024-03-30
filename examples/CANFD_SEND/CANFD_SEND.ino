@@ -1,5 +1,10 @@
+#include <mcp2518fd_can.h>
+#include <mcp2518fd_can_dfs.h>
+#include <mcp_can_fd.h>
+
 /*  MCP2517/8 send a can fd frame
 
+ECLIPSE
     CAN FD Shield - https://www.longan-labs.cc/1030012.html
     CANBed FD - https://www.longan-labs.cc/1030009.html
     
@@ -79,6 +84,10 @@ void loop()
 {
     // send data:  id = 0x00, standrad frame, data len = 64, stmp: data buf
     CAN.sendMsgBuf(0x01, 0, CANFD::len2dlc(MAX_DATA_SIZE), stmp);
+//    stmp[0]++;
+//    CAN.sendMsgBuf(0x01, 0, CANFD::len2dlc(MAX_DATA_SIZE), stmp);
+//    stmp[0]++;
+//    CAN.sendMsgBuf(0x01, 0, CANFD::len2dlc(MAX_DATA_SIZE), stmp);
     delay(10);
 
     if (CAN_MSGAVAIL == CAN.checkReceive())
