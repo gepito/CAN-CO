@@ -26,16 +26,21 @@
 #define MAX_DATA_SIZE 64
 
 // pin for CAN-FD Shield
-//const int SPI_CS_PIN = 9;
-//const int CAN_INT_PIN = 2;
+const int SPI_CS_PIN = 9;
+const int CAN_INT_PIN = 2;
 
 // pin for CANBed FD
-const int SPI_CS_PIN = 17;
-const int CAN_INT_PIN = 7;
+//const int SPI_CS_PIN = 17;
+//const int CAN_INT_PIN = 7;
 
 mcp2518fd CAN(SPI_CS_PIN); // Set CS pin
 
 unsigned char stmp[MAX_DATA_SIZE] = {0};
+
+unsigned char flagRecv = 0;
+unsigned char len = 0;
+unsigned char buf[MAX_DATA_SIZE];
+
 
 
 void setup() {
@@ -56,6 +61,17 @@ void setup() {
     {
         stmp[i] = i;
     }
+
+    stmp[0] = 'B';
+
+    // autosend will send until acknowledged - if unrestricted
+    // CAN.sendMsgBuf(0x01, 0, CANFD::len2dlc(MAX_DATA_SIZE), stmp);
+
+    // init_Filt_Mask(filter number, ext, filter, mask)
+    // There're 32 set of filter/mask for MCP2517FD, filter number can be set to 0~31
+    CAN.init_Filt_Mask(CAN_FILTER0, 0, 0, 0);     // get all standard frame
+    CAN.init_Filt_Mask(CAN_FILTER1, 1, 0, 0);     // get all extended frame
+
 }
 
 
@@ -64,6 +80,24 @@ void loop()
     // send data:  id = 0x00, standrad frame, data len = 64, stmp: data buf
     CAN.sendMsgBuf(0x01, 0, CANFD::len2dlc(MAX_DATA_SIZE), stmp);
     delay(10);
+
+    if (CAN_MSGAVAIL == CAN.checkReceive())
+    {
+        CAN.readMsgBuf(&len, buf);            // You should call readMsgBuff before getCanId
+        unsigned long id = CAN.getCanId();
+
+        Serial.print("Get Data From id: ");
+        Serial.println(id);
+        Serial.print("Len = ");
+        Serial.println(len);
+            // print the data
+        for (int i = 0; i < len; i++) {
+            Serial.print(buf[i]);
+            Serial.print("\t");
+        }
+        Serial.println();
+    }
+
 }
 
 // END FILE
