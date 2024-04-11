@@ -8203,8 +8203,10 @@ www.irf.com&lt;p&gt;
 <part name="J6" library="Discrete" deviceset="SWITCH-2CH-6P" device=""/>
 <part name="C1" library="Discrete-new" deviceset="CAP" device="-1206" value="22uF"/>
 <part name="R1" library="rcl" deviceset="R-EU_" device="R0603" value="0"/>
-<part name="Q1" library="transistor-small-signal" deviceset="BSS123" device=""/>
+<part name="Q1" library="transistor-small-signal" deviceset="BSS123" device="" value="FDV303"/>
 <part name="U$2" library="Power or GND " deviceset="GND_POWER" device=""/>
+<part name="R2" library="rcl" deviceset="R-EU_" device="R0603" value="100k"/>
+<part name="U$3" library="Power or GND " deviceset="GND_POWER" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -8288,7 +8290,9 @@ www.irf.com&lt;p&gt;
 <instance part="C1" gate="C" x="215.9" y="147.32" rot="R90"/>
 <instance part="R1" gate="G$1" x="58.42" y="-12.7"/>
 <instance part="Q1" gate="G$1" x="104.14" y="-17.78"/>
-<instance part="U$2" gate="G$1" x="104.14" y="-25.4"/>
+<instance part="U$2" gate="G$1" x="104.14" y="-33.02"/>
+<instance part="R2" gate="G$1" x="96.52" y="-27.94" rot="R90"/>
+<instance part="U$3" gate="G$1" x="96.52" y="-33.02"/>
 </instances>
 <busses>
 </busses>
@@ -8449,7 +8453,11 @@ www.irf.com&lt;p&gt;
 <segment>
 <pinref part="Q1" gate="G$1" pin="S"/>
 <pinref part="U$2" gate="G$1" pin="GND"/>
-<wire x1="104.14" y1="-25.4" x2="104.14" y2="-22.86" width="0.1524" layer="91"/>
+<wire x1="104.14" y1="-33.02" x2="104.14" y2="-22.86" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="R2" gate="G$1" pin="1"/>
+<pinref part="U$3" gate="G$1" pin="GND"/>
 </segment>
 </net>
 <net name="5V" class="0">
@@ -8537,7 +8545,7 @@ www.irf.com&lt;p&gt;
 <pinref part="Q1" gate="G$1" pin="D"/>
 <wire x1="104.14" y1="-12.7" x2="104.14" y2="-10.16" width="0.1524" layer="91"/>
 <wire x1="104.14" y1="-10.16" x2="116.84" y2="-10.16" width="0.1524" layer="91"/>
-<label x="114.3" y="-7.62" size="1.778" layer="95"/>
+<label x="116.84" y="-10.16" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="TX_CAN" class="0">
@@ -8572,11 +8580,6 @@ www.irf.com&lt;p&gt;
 <label x="106.68" y="50.8" size="0.889" layer="95" ratio="12" rot="R180" xref="yes"/>
 <pinref part="U6" gate="G$1" pin="RXD"/>
 <wire x1="106.68" y1="50.8" x2="116.84" y2="50.8" width="0.1524" layer="91"/>
-</segment>
-<segment>
-<pinref part="R1" gate="G$1" pin="1"/>
-<wire x1="53.34" y1="-12.7" x2="45.72" y2="-12.7" width="0.1524" layer="91"/>
-<label x="40.64" y="-10.16" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="ADC1" class="0">
@@ -8744,13 +8747,17 @@ www.irf.com&lt;p&gt;
 <net name="IO7" class="0">
 <segment>
 <wire x1="90.17" y1="132.08" x2="82.55" y2="132.08" width="0.1524" layer="91"/>
-<label x="83.82" y="132.08" size="1.778" layer="95"/>
+<label x="90.17" y="132.08" size="0.889" layer="95" xref="yes"/>
 <pinref part="U4" gate="SEEEDUINO" pin="PD7/D7"/>
 </segment>
 <segment>
 <pinref part="Q1" gate="G$1" pin="G"/>
-<wire x1="99.06" y1="-20.32" x2="91.44" y2="-20.32" width="0.1524" layer="91"/>
-<label x="88.9" y="-17.78" size="1.778" layer="95"/>
+<wire x1="99.06" y1="-20.32" x2="96.52" y2="-20.32" width="0.1524" layer="91"/>
+<label x="91.44" y="-20.32" size="1.778" layer="95" rot="R180" xref="yes"/>
+<pinref part="R2" gate="G$1" pin="2"/>
+<wire x1="96.52" y1="-20.32" x2="91.44" y2="-20.32" width="0.1524" layer="91"/>
+<wire x1="96.52" y1="-22.86" x2="96.52" y2="-20.32" width="0.1524" layer="91"/>
+<junction x="96.52" y="-20.32"/>
 </segment>
 </net>
 <net name="CANL" class="0">
@@ -9003,13 +9010,13 @@ www.irf.com&lt;p&gt;
 </segment>
 <segment>
 <wire x1="90.17" y1="121.92" x2="82.55" y2="121.92" width="0.1524" layer="91"/>
-<label x="83.82" y="121.92" size="1.778" layer="95"/>
+<label x="90.17" y="121.92" size="0.889" layer="95" xref="yes"/>
 <pinref part="U4" gate="SEEEDUINO" pin="PD3/D3/INT1/PWM"/>
 </segment>
 <segment>
 <pinref part="R1" gate="G$1" pin="2"/>
 <wire x1="63.5" y1="-12.7" x2="71.12" y2="-12.7" width="0.1524" layer="91"/>
-<label x="68.58" y="-10.16" size="1.778" layer="95"/>
+<label x="71.12" y="-12.7" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="SCL" class="0">
@@ -9142,6 +9149,18 @@ www.irf.com&lt;p&gt;
 <wire x1="21.59" y1="39.37" x2="19.05" y2="39.37" width="0.1524" layer="91"/>
 <wire x1="21.59" y1="40.64" x2="21.59" y2="39.37" width="0.1524" layer="91"/>
 <junction x="21.59" y="39.37"/>
+</segment>
+</net>
+<net name="SOF" class="0">
+<segment>
+<label x="24.384" y="55.88" size="0.889" layer="95" rot="R180" xref="yes"/>
+<pinref part="U5" gate="G$1" pin="CLKO/SOF"/>
+<wire x1="29.21" y1="55.88" x2="24.384" y2="55.88" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="R1" gate="G$1" pin="1"/>
+<wire x1="53.34" y1="-12.7" x2="45.72" y2="-12.7" width="0.1524" layer="91"/>
+<label x="45.72" y="-12.7" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 </nets>
