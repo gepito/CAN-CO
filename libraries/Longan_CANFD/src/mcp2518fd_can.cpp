@@ -1866,6 +1866,7 @@ uint8_t mcp2518fd::mcp2518fd_init(uint32_t speedset, const byte clock) {
     txConfig.FifoSize = 7;
     txConfig.PayLoadSize = CAN_PLSIZE_64;
     txConfig.TxPriority = 1;
+    // TxAttempts = 0 : no retransmission
     // TxAttempts = 1 : 3 attempts
     // TxAttempts = 2 : unlimited attempts
     txConfig.TxAttempts = 0;
