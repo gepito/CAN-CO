@@ -1,7 +1,6 @@
-#include <HeliOS.h>
+#include <TimerOne.h>
 
 #define FG_INTERVAL_MS    500
-
 
 // Failure generation mode
 typedef enum {
@@ -36,21 +35,17 @@ int fg_pn = 0;
 int helios_state = 0;
 
 void setup() {
-  
-  xTask failtask;
 
+  // set up timer "task"
+  Timer1.initialize(150000);
+  Timer1.attachInterrupt(failTask_main); // failTask_main to run every 0.15 seconds   
+  
   Serial.setTimeout(100);
   Serial.begin(115200);
   while (!Serial) {}
 
   print_help();
   print_param();
-
-  setup_task();
-  if (helios_state){
-    Serial.print("HeliOS init failure: ");
-    Serial.println(helios_state);
-  }
 
 }
 
@@ -72,7 +67,7 @@ void loop() {
 /*
   Generate failure at timer interrupt
 */
-void failTask_main(xTask task_, xTaskParm parm_) {
+void failTask_main() {
 
   fg_tn++;
   fg_fire++;
@@ -80,38 +75,6 @@ void failTask_main(xTask task_, xTaskParm parm_) {
 
 }
 
-
-void setup_task(){
-
-  xTask blink;
-
-  Serial.println("helios_1");
-  if(ERROR(xSystemInit())) {
-    helios_state = 1;
-  }
-
-  Serial.println("helios_2");
-  if(ERROR(xTaskCreate(&blink, (const xByte *) "BLINKTSK", failTask_main, NULL))) {
-    helios_state = 2;
-  }
-
-  Serial.println("helios_3");
-  if(ERROR(xTaskWait(blink))) {
-    helios_state = 3;
-  }
-
-  Serial.println("helios_4");
-  if(ERROR(xTaskChangePeriod(blink, FG_INTERVAL_MS))) {
-    helios_state = 4;
-  }
-
-  Serial.println("helios_5");
-  if(ERROR(xTaskStartScheduler())) {
-    helios_state = 5;
-  }
-  Serial.println("helios_6");
-
-}
 
 /*
   Read string from serial line, set operation parameters accordingly
