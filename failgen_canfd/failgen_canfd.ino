@@ -28,12 +28,16 @@ ECLIPSE
 #include <SPI.h>
 
 #define MAX_DATA_SIZE 64
+
 #include <TimerOne.h>
 
-#define FG_MIN_INTERVAL_MS    100
+#define FG_MIN_INTERVAL_MS    20
 
 // the length of failure pulse upon timed event
 #define FG_TIMED_PULSE_US     10
+
+// allow operation without serial connection
+#define RUN_STANDALONE
 
 // SOF interrupt pin
 const byte SOF_IT_PIN = 3;
@@ -44,6 +48,9 @@ const byte FAILGEN_PIN = 7;
 const byte SPI_CS_PIN = 9;
 const byte CAN_INT_PIN = 2;
 
+mcp2518fd CAN(SPI_CS_PIN); // Set CS pin
+// CAN transmit buffer
+unsigned char stmp[MAX_DATA_SIZE] = {0};
 
 // Failure generation mode
 typedef enum {
@@ -61,6 +68,11 @@ unsigned int fg_time = 0;
 // number of failures after receiving pattern
 //    0 : pattern doesn't trigger failure
 int fg_nfail = 0;
+
+// frame skip counter
+// failure is generated when reach 0 - in Counted and Pattern Triggered mode
+unsigned int fg_n;
+int loop_n;
 
 // skip N frames between pattern triggered failures
 //    0 : generate consecutive failures
@@ -83,11 +95,13 @@ unsigned int fg_paddress = 0;
 unsigned int fg_pdata = 0;
 
 // parameters for counter based generation
-int fg_nmin, fg_nmax;
+unsigned int fg_nmin = 0;
+unsigned int fg_nmax = 0;
 
 void setup() {
 
   // set up GPIO ports
+  // ---------------------------------------------------------------------------
   pinMode(FAILGEN_PIN, OUTPUT);
   pinMode(SOF_IT_PIN, INPUT_PULLUP);
   // attach interrupt ONLY after setting MCP:PIN3 to SOF mode!!!
@@ -96,25 +110,68 @@ void setup() {
 
   // deactivate failure generator
   digitalWrite(FAILGEN_PIN, LOW);
+  // ---------------------------------------------------------------------------
 
-  // set up timer "task"
-  Timer1.initialize(1500000);
-  Timer1.attachInterrupt(fg_timer); // failTask_main to run every 0.15 seconds   
+  // set up Timer1
+  // ---------------------------------------------------------------------------
   Timer1.stop();
+  Timer1.attachInterrupt(fg_timer); 
+  // ---------------------------------------------------------------------------
 
   Serial.setTimeout(100);
   Serial.begin(115200);
+
+#ifndef RUN_STANDALONE
   while (!Serial) {}
+#endif
 
   print_help();
   print_param();
+
+  // set up MPC2517/2518 CAN_FD controller
+  // ---------------------------------------------------------------------------
+
+  CAN.setMode(CAN_NORMAL_MODE);
+
+  // init can bus : arbitration bitrate = 1M, data bitrate = 4M
+  while (0 != CAN.begin(CAN_1000K_4M));
+  Serial.println("CAN init ok!");
+
+  byte mode = CAN.getMode();
+  Serial.print("CAN mode = ");
+  Serial.println(mode);
+
+  // init_Filt_Mask(filter number, ext, filter, mask)
+  // There're 32 set of filter/mask for MCP2517FD, filter number can be set to 0~31
+  CAN.init_Filt_Mask(CAN_FILTER0, 0, 0, 0);     // get all standard frame
+  CAN.init_Filt_Mask(CAN_FILTER1, 1, 0, 0);     // get all extended frame
+
+  for(int i=0; i<MAX_DATA_SIZE; i++)
+  {
+      stmp[i] = (i < 16)?i + (i << 4):i;
+  }
+  // ---------------------------------------------------------------------------
+
+  loop_n = 0;
+
+// activate standalone only here, when INT_B is set to SOF
+#ifdef RUN_STANDALONE
+  fg_fmode = FM_DATA;
+  fg_nmin = 90;
+  fg_nmax = 110;
+  attachInterrupt(digitalPinToInterrupt(SOF_IT_PIN), fg_data_pulse, RISING);
+  // generate failure upon the first frame
+  fg_n = 0;
+#endif
 
 }
 
 void loop() {
   // main code here, to run repeatedly:
 
+
   if (Serial.available()){
+    Serial.println("Fetching...");
     fetch_param();
     print_param();
   }
@@ -122,6 +179,12 @@ void loop() {
   if (fg_fire){
     print_fgstatus();
     fg_fire = 0;
+  }
+
+  Serial.print(fg_n); delay(10);
+  if (loop_n++ > 80){
+    loop_n = 0;
+    Serial.println();
   }
 }
 
@@ -148,13 +211,24 @@ void loop() {
 void fg_arb_pulse(){
 // constants set for Standard 1/4 MBPS CAN_FD
 
-  // use inline code, assure timingaccuracy!!!
-  digitalWrite(FAILGEN_PIN, HIGH);
-  delayMicroseconds(2);
-  digitalWrite(FAILGEN_PIN, LOW);
+  if (fg_n == 0) {
+    // the counter has expired, it is time to generate failure
+  
+    // use inline code, assure timingaccuracy!!!
+    digitalWrite(FAILGEN_PIN, HIGH);
+    delayMicroseconds(2);
+    digitalWrite(FAILGEN_PIN, LOW);
 
-  fg_num_p++;
-  fg_fire++;
+    fg_num_p++;
+    fg_fire++;
+    
+    // calculate next failure generation counter
+    fg_n = random(fg_nmin, fg_nmax);
+
+  }
+  else {
+    fg_n--;
+  }
   return;
 
 }
@@ -168,14 +242,25 @@ void fg_arb_pulse(){
 void fg_data_pulse(){
 // constants set for Standard 1/4 MBPS CAN_FD
 
-  delayMicroseconds(5);
-  // use inline code, assure timingaccuracy!!!
-  digitalWrite(FAILGEN_PIN, HIGH);
-  delayMicroseconds(2);
-  digitalWrite(FAILGEN_PIN, LOW);
+  if (fg_n == 0) {
+    // the counter has expired, it is time to generate failure
+    
+    delayMicroseconds(20);
+    // use inline code, assure timingaccuracy!!!
+    digitalWrite(FAILGEN_PIN, HIGH);
+//    delayMicroseconds(2);
+    digitalWrite(FAILGEN_PIN, LOW);
 
-  fg_num_p++;
-  fg_fire++;
+    fg_num_p++;
+    fg_fire++;
+    
+    // calculate next failure generation counter
+    fg_n = random(fg_nmin, fg_nmax);
+
+  }
+  else {
+    fg_n--;
+  }
   return;
 
 }
@@ -223,6 +308,9 @@ void fetch_param() {
         else {
           fg_nmax = fg_nmin+1;
         }
+        // attachInterrupt() usualli generate interrupt as request is usually pending
+        // fg_n = 1 will disable failure generation upon activation
+        fg_n = 1;
 
         if (fg_fmode == FM_ARBITRATION){
           attachInterrupt(digitalPinToInterrupt(SOF_IT_PIN), fg_arb_pulse, RISING);
@@ -238,6 +326,7 @@ void fetch_param() {
       }
       break;
 
+/*
     case 'P':
       if (scanres >= 2){
         fg_paddress = param1;
@@ -260,10 +349,10 @@ void fetch_param() {
         fg_skip = param2;
 
         if (fg_fmode == FM_ARBITRATION){
-          attachInterrupt(digitalPinToInterrupt(CAN_INT_PIN), fg_arb_pulse, RISING);
+          attachInterrupt(digitalPinToInterrupt(CAN_INT_PIN), fg_arb_pulse, FALLING);
         }
         else if (fg_fmode == FM_DATA) {
-          attachInterrupt(digitalPinToInterrupt(CAN_INT_PIN), fg_data_pulse, RISING);
+          attachInterrupt(digitalPinToInterrupt(CAN_INT_PIN), fg_data_pulse, FALLING);
         }
 
       }
@@ -272,7 +361,7 @@ void fetch_param() {
         fg_nfail = 0;
       }
       break;
-
+*/
     case 'T':
       if ((scanres >= 2) && (param1 > FG_MIN_INTERVAL_MS)){
         fg_time = param1;
@@ -286,6 +375,9 @@ void fetch_param() {
       break;
 
     default:
+      // send dummy frame upon invalid setup command
+      CAN.sendMsgBuf(0x01, 0, CANFD::len2dlc(MAX_DATA_SIZE), stmp);
+      stmp[0]++;
       break;
   }
 
@@ -364,17 +456,6 @@ void print_param() {
   }
 
   Serial.println();
-
-}
-
-void print_fg_mode(){
-
-  if (fg_fmode == FM_ARBITRATION){
-    Serial.print("FG_Arb ");
-  }
-  else {
-    Serial.print("FG_Data ");
-  }
 
 }
 

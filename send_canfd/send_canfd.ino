@@ -2,14 +2,6 @@
 #include <mcp2518fd_can_dfs.h>
 #include <mcp_can_fd.h>
 
-#include <mcp2518fd_can.h>
-#include <mcp2518fd_can_dfs.h>
-#include <mcp_can_fd.h>
-
-#include <mcp2518fd_can.h>
-#include <mcp2518fd_can_dfs.h>
-#include <mcp_can_fd.h>
-
 /*  MCP2517/8 send a can fd frame
 
 ECLIPSE
@@ -34,11 +26,10 @@ ECLIPSE
 */
 
 #include <SPI.h>
-#include "mcp2518fd_can.h"
 
 #define MAX_DATA_SIZE 64
 
-// pin for CAN-FD Shield
+// pins for CAN-FD Shield
 const int SPI_CS_PIN = 9;
 const int CAN_INT_PIN = 2;
 
