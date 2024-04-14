@@ -50,4 +50,4 @@ SOFTWARE.
 
 ## Contact us
 
-If you have any question, please feel free to contact [Support](can-co@g-epito.hu)
+If you have any question, please feel free to contact [Support](mailto:can-co@g-epito.hu)
